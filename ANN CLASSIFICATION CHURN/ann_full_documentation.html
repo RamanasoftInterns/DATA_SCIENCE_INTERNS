@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artificial Neural Networks — End to End</title>
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1218;
+  --bg-panel:#161a23;
+  --bg-card:#1b202b;
+  --text:#e9e7e2;
+  --text-dim:#9aa1af;
+  --text-faint:#5f6675;
+  --blue:#6fa8ff;
+  --amber:#f0a860;
+  --green:#7fd1a0;
+  --red:#e78a8a;
+  --purple:#b79cf0;
+  --border:#272c38;
+  --border-soft:#1e2330;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;font-size:16px;}
+::selection{background:var(--blue);color:#0f1218;}
+
+.hero{
+  padding:90px 8vw 70px;
+  border-bottom:1px solid var(--border);
+  background:
+    radial-gradient(circle at 85% 15%, rgba(111,168,255,0.10), transparent 45%),
+    radial-gradient(circle at 10% 90%, rgba(240,168,96,0.08), transparent 40%);
+}
+.hero .eyebrow{font-family:'JetBrains Mono',monospace;color:var(--amber);letter-spacing:.14em;font-size:12.5px;text-transform:uppercase;margin-bottom:18px;}
+.hero h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(34px,5vw,56px);line-height:1.08;margin:0 0 20px;max-width:820px;letter-spacing:-0.01em;}
+.hero h1 em{font-style:italic;color:var(--blue);}
+.hero p.sub{color:var(--text-dim);font-size:18px;max-width:660px;margin:0 0 30px;}
+.hero .tags{display:flex;flex-wrap:wrap;gap:10px;}
+.hero .tags span{font-family:'JetBrains Mono',monospace;font-size:12px;border:1px solid var(--border);padding:6px 12px;border-radius:100px;color:var(--text-dim);}
+
+.layout{display:grid;grid-template-columns:270px 1fr;max-width:1280px;margin:0 auto;}
+nav.toc{padding:50px 26px;border-right:1px solid var(--border);position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;}
+nav.toc .label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--text-faint);text-transform:uppercase;margin-bottom:16px;}
+nav.toc .group{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:var(--text-faint);text-transform:uppercase;margin:20px 0 4px;}
+nav.toc .group:first-of-type{margin-top:0;}
+nav.toc a{display:block;color:var(--text-dim);text-decoration:none;font-size:13.5px;padding:6px 0;border-left:2px solid transparent;padding-left:12px;margin-left:-12px;transition:.15s;}
+nav.toc a:hover{color:var(--text);border-left-color:var(--amber);}
+nav.toc .num{font-family:'JetBrains Mono',monospace;color:var(--blue);margin-right:8px;font-size:12px;}
+
+main{padding:50px 6vw 100px;max-width:920px;}
+section{margin-bottom:74px;scroll-margin-top:30px;}
+section .kicker{font-family:'JetBrains Mono',monospace;color:var(--blue);font-size:13px;letter-spacing:.08em;}
+section h2{font-family:'Fraunces',serif;font-weight:600;font-size:32px;margin:6px 0 22px;letter-spacing:-0.01em;}
+section h3{font-family:'Fraunces',serif;font-weight:600;font-size:21px;margin:34px 0 14px;color:var(--text);}
+h3 .badge{display:inline-block;background:var(--bg-card);border:1px solid var(--border);color:var(--amber);font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 9px;border-radius:6px;margin-right:10px;vertical-align:middle;}
+p{color:#d7d5cf;margin:14px 0;}
+strong{color:#fff;font-weight:600;}
+code{font-family:'JetBrains Mono',monospace;background:var(--bg-card);padding:2px 7px;border-radius:5px;font-size:.88em;color:var(--green);border:1px solid var(--border-soft);}
+ul,ol{color:#d7d5cf;padding-left:22px;}
+li{margin:8px 0;}
+a{color:var(--blue);}
+
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:22px 26px;margin:22px 0;}
+.card.note{border-left:3px solid var(--blue);}
+.card.warn{border-left:3px solid var(--red);}
+.card.tip{border-left:3px solid var(--green);}
+.card.idea{border-left:3px solid var(--purple);}
+.card .label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;}
+.card.note .label{color:var(--blue);}
+.card.warn .label{color:var(--red);}
+.card.tip .label{color:var(--green);}
+.card.idea .label{color:var(--purple);}
+
+.diagram{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:26px 0;text-align:center;}
+.diagram svg{max-width:100%;height:auto;}
+.diagram .cap{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-faint);margin-top:12px;text-align:left;}
+
+table{width:100%;border-collapse:collapse;margin:22px 0;font-size:14.5px;}
+th{text-align:left;font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--amber);border-bottom:1px solid var(--border);padding:10px 14px;}
+td{border-bottom:1px solid var(--border-soft);padding:12px 14px;color:#d7d5cf;vertical-align:top;}
+tr:hover td{background:rgba(255,255,255,0.02);}
+
+.eqn{background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:18px 22px;margin:18px 0;overflow-x:auto;}
+.eqn .tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint);margin-bottom:6px;}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+@media(max-width:800px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+.divider{height:1px;background:linear-gradient(90deg,var(--border),transparent);margin:60px 0;}
+
+.glossary dt{font-family:'JetBrains Mono',monospace;color:var(--amber);font-size:14px;margin-top:16px;}
+.glossary dd{margin:4px 0 0 0;color:#d7d5cf;}
+
+footer{padding:50px 6vw;border-top:1px solid var(--border);color:var(--text-faint);font-family:'JetBrains Mono',monospace;font-size:12.5px;}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr;}
+  nav.toc{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--border);}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="eyebrow">// artificial neural networks — full reference</div>
+  <h1>Artificial Neural Networks,<br><em>end to end.</em></h1>
+  <p class="sub">Everything about the ANN specifically — anatomy, math, training mechanics, hyperparameters, architecture-design intuition, a build workflow, and a debugging checklist. Companion to the general Deep Learning foundations doc and the hands-on Keras notebook.</p>
+  <div class="tags">
+    <span>anatomy of an ANN</span>
+    <span>forward &amp; backprop</span>
+    <span>hyperparameters</span>
+    <span>architecture design intuition</span>
+    <span>build workflow</span>
+    <span>debugging checklist</span>
+  </div>
+</div>
+
+<div class="layout">
+<nav class="toc">
+  <div class="label">Contents</div>
+
+  <div class="group">What It Is</div>
+  <a href="#s1"><span class="num">01</span>What is an ANN</a>
+  <a href="#s2"><span class="num">02</span>The Neuron, Recap</a>
+  <a href="#s3"><span class="num">03</span>Anatomy of an ANN</a>
+
+  <div class="group">The Math</div>
+  <a href="#s4"><span class="num">04</span>Weights, Biases, Parameters</a>
+  <a href="#s5"><span class="num">05</span>Activation Functions</a>
+  <a href="#s6"><span class="num">06</span>Forward Propagation</a>
+  <a href="#s7"><span class="num">07</span>Loss Functions</a>
+  <a href="#s8"><span class="num">08</span>Backpropagation</a>
+  <a href="#s9"><span class="num">09</span>Weight Update Rule</a>
+  <a href="#s10"><span class="num">10</span>Optimizers</a>
+
+  <div class="group">Making It Work</div>
+  <a href="#s11"><span class="num">11</span>Weight Initialization</a>
+  <a href="#s12"><span class="num">12</span>Regularization</a>
+  <a href="#s13"><span class="num">13</span>Batch Normalization</a>
+  <a href="#s14"><span class="num">14</span>Vanishing / Exploding Gradients</a>
+
+  <div class="group">Practical Intuition</div>
+  <a href="#s15"><span class="num">15</span>Hyperparameters, All of Them</a>
+  <a href="#s16"><span class="num">16</span>Designing an Architecture</a>
+  <a href="#s17"><span class="num">17</span>Step-by-Step Build Workflow</a>
+  <a href="#s18"><span class="num">18</span>Debugging Checklist</a>
+
+  <div class="group">Reference</div>
+  <a href="#s19"><span class="num">19</span>ANN vs CNN vs RNN vs Transformer</a>
+  <a href="#s20"><span class="num">20</span>Glossary</a>
+</nav>
+
+<main>
+
+<!-- ================= 01 ================= -->
+<section id="s1">
+  <div class="kicker">01</div>
+  <h2>What is an ANN?</h2>
+  <p>An <strong>Artificial Neural Network (ANN)</strong> — also called a <strong>Feedforward Neural Network</strong> or <strong>Multi-Layer Perceptron (MLP)</strong> — is the foundational neural network architecture: a set of neurons arranged in layers, where every neuron in one layer connects to every neuron in the next, and information flows strictly forward from input to output.</p>
+  <p>It is the architecture every other neural network (CNN, RNN, Transformer) is built on top of. Understanding an ANN completely — the math, the training loop, the failure modes, the design choices — is what makes every more advanced architecture readable later, because they all reuse the same core machinery: neurons, weights, activations, loss, backprop, and gradient descent.</p>
+  <div class="card note">
+    <div class="label">Where an ANN fits</div>
+    Plain ANNs are the right tool for <strong>structured/tabular data</strong> — rows and columns, like a spreadsheet or database table (customer records, sensor readings, financial data). For images you'd reach for a CNN, for sequences an RNN/Transformer — but underneath, they're still ANNs with a specialized front end.
+  </div>
+</section>
+
+<!-- ================= 02 ================= -->
+<section id="s2">
+  <div class="kicker">02</div>
+  <h2>The Neuron — Quick Recap</h2>
+  <p>Every neuron performs the same two-step computation: a <strong>weighted sum</strong>, then a <strong>non-linear activation</strong>.</p>
+  <div class="eqn">
+    \[ z = \sum_{i=1}^{n} w_i x_i + b, \qquad a = f(z) \]
+  </div>
+  <div class="diagram">
+    <svg viewBox="0 0 620 180" xmlns="http://www.w3.org/2000/svg">
+      <style>.lbl{font-family:'JetBrains Mono',monospace;font-size:12px;fill:#9aa1af;}</style>
+      <text x="20" y="35" class="lbl">x1</text>
+      <line x1="45" y1="35" x2="150" y2="70" stroke="#6fa8ff" stroke-width="2"/>
+      <text x="80" y="45" class="lbl">w1</text>
+      <text x="20" y="75" class="lbl">x2</text>
+      <line x1="45" y1="75" x2="150" y2="80" stroke="#6fa8ff" stroke-width="2"/>
+      <text x="80" y="70" class="lbl">w2</text>
+      <text x="20" y="115" class="lbl">x3</text>
+      <line x1="45" y1="115" x2="150" y2="90" stroke="#6fa8ff" stroke-width="2"/>
+      <text x="80" y="110" class="lbl">w3</text>
+      <circle cx="180" cy="80" r="34" fill="#1b202b" stroke="#f0a860" stroke-width="2"/>
+      <text x="180" y="75" text-anchor="middle" class="lbl">Σ+b</text>
+      <text x="180" y="93" text-anchor="middle" class="lbl" style="fill:#f0a860">f(z)</text>
+      <line x1="214" y1="80" x2="290" y2="80" stroke="#7fd1a0" stroke-width="3" marker-end="url(#a)"/>
+      <text x="300" y="85" class="lbl">a (output)</text>
+      <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7fd1a0"/></marker></defs>
+    </svg>
+    <div class="cap">Fig 1 — One neuron: weighted inputs summed with a bias, then squashed by an activation function.</div>
+  </div>
+  <p>Stack many of these into layers, stack layers one after another, and you have an ANN. Everything from here is about what happens when you connect thousands of these together and train the whole system at once.</p>
+</section>
+
+<!-- ================= 03 ================= -->
+<section id="s3">
+  <div class="kicker">03</div>
+  <h2>Anatomy of an ANN</h2>
+  <table>
+    <tr><th>Layer</th><th>Role</th><th>Notes</th></tr>
+    <tr><td><strong>Input layer</strong></td><td>Receives the raw feature vector</td><td>No computation here — size = number of features. Not counted as a "layer" when people say "a 3-layer network."</td></tr>
+    <tr><td><strong>Hidden layer(s)</strong></td><td>Learn intermediate representations</td><td>Each does Linear → (BatchNorm) → Activation → (Dropout). "Deep" = many hidden layers.</td></tr>
+    <tr><td><strong>Output layer</strong></td><td>Produces the final prediction</td><td>Activation depends on task: sigmoid (binary), softmax (multi-class), linear/none (regression).</td></tr>
+  </table>
+
+  <div class="diagram">
+    <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+      <style>.lbl{font-family:'JetBrains Mono',monospace;font-size:12px;fill:#9aa1af;}</style>
+      <circle cx="70" cy="60" r="13" fill="#1b202b" stroke="#6fa8ff" stroke-width="2"/>
+      <circle cx="70" cy="120" r="13" fill="#1b202b" stroke="#6fa8ff" stroke-width="2"/>
+      <circle cx="70" cy="180" r="13" fill="#1b202b" stroke="#6fa8ff" stroke-width="2"/>
+      <circle cx="70" cy="240" r="13" fill="#1b202b" stroke="#6fa8ff" stroke-width="2"/>
+
+      <circle cx="240" cy="40" r="13" fill="#1b202b" stroke="#f0a860" stroke-width="2"/>
+      <circle cx="240" cy="100" r="13" fill="#1b202b" stroke="#f0a860" stroke-width="2"/>
+      <circle cx="240" cy="160" r="13" fill="#1b202b" stroke="#f0a860" stroke-width="2"/>
+      <circle cx="240" cy="220" r="13" fill="#1b202b" stroke="#f0a860" stroke-width="2"/>
+      <circle cx="240" cy="260" r="13" fill="#1b202b" stroke="#f0a860" stroke-width="2"/>
+
+      <circle cx="410" cy="60" r="13" fill="#1b202b" stroke="#f0a860" stroke-width="2"/>
+      <circle cx="410" cy="120" r="13" fill="#1b202b" stroke="#f0a860" stroke-width="2"/>
+      <circle cx="410" cy="180" r="13" fill="#1b202b" stroke="#f0a860" stroke-width="2"/>
+      <circle cx="410" cy="240" r="13" fill="#1b202b" stroke="#f0a860" stroke-width="2"/>
+
+      <circle cx="580" cy="150" r="14" fill="#1b202b" stroke="#7fd1a0" stroke-width="2"/>
+
+      <g stroke="#2a3040" stroke-width="1">
+        <line x1="83" y1="60" x2="227" y2="40"/><line x1="83" y1="60" x2="227" y2="100"/><line x1="83" y1="60" x2="227" y2="160"/><line x1="83" y1="60" x2="227" y2="220"/><line x1="83" y1="60" x2="227" y2="260"/>
+        <line x1="83" y1="120" x2="227" y2="40"/><line x1="83" y1="120" x2="227" y2="100"/><line x1="83" y1="120" x2="227" y2="160"/><line x1="83" y1="120" x2="227" y2="220"/><line x1="83" y1="120" x2="227" y2="260"/>
+        <line x1="83" y1="180" x2="227" y2="40"/><line x1="83" y1="180" x2="227" y2="100"/><line x1="83" y1="180" x2="227" y2="160"/><line x1="83" y1="180" x2="227" y2="220"/><line x1="83" y1="180" x2="227" y2="260"/>
+        <line x1="83" y1="240" x2="227" y2="40"/><line x1="83" y1="240" x2="227" y2="100"/><line x1="83" y1="240" x2="227" y2="160"/><line x1="83" y1="240" x2="227" y2="220"/><line x1="83" y1="240" x2="227" y2="260"/>
+
+        <line x1="253" y1="40" x2="397" y2="60"/><line x1="253" y1="40" x2="397" y2="120"/><line x1="253" y1="40" x2="397" y2="180"/><line x1="253" y1="40" x2="397" y2="240"/>
+        <line x1="253" y1="100" x2="397" y2="60"/><line x1="253" y1="100" x2="397" y2="120"/><line x1="253" y1="100" x2="397" y2="180"/><line x1="253" y1="100" x2="397" y2="240"/>
+        <line x1="253" y1="160" x2="397" y2="60"/><line x1="253" y1="160" x2="397" y2="120"/><line x1="253" y1="160" x2="397" y2="180"/><line x1="253" y1="160" x2="397" y2="240"/>
+        <line x1="253" y1="220" x2="397" y2="60"/><line x1="253" y1="220" x2="397" y2="120"/><line x1="253" y1="220" x2="397" y2="180"/><line x1="253" y1="220" x2="397" y2="240"/>
+        <line x1="253" y1="260" x2="397" y2="60"/><line x1="253" y1="260" x2="397" y2="120"/><line x1="253" y1="260" x2="397" y2="180"/><line x1="253" y1="260" x2="397" y2="240"/>
+
+        <line x1="423" y1="60" x2="566" y2="150"/><line x1="423" y1="120" x2="566" y2="150"/><line x1="423" y1="180" x2="566" y2="150"/><line x1="423" y1="240" x2="566" y2="150"/>
+      </g>
+      <text x="45" y="270" class="lbl">Input</text>
+      <text x="205" y="10" class="lbl">Hidden 1</text>
+      <text x="375" y="10" class="lbl">Hidden 2</text>
+      <text x="555" y="190" class="lbl">Output</text>
+    </svg>
+    <div class="cap">Fig 2 — A fully-connected ANN: every neuron in a layer connects to every neuron in the next ("dense" / "fully-connected" layers). Data only ever moves forward.</div>
+  </div>
+
+  <div class="card tip">
+    <div class="label">Terminology check</div>
+    "A 3-layer network" usually means 3 layers of <em>weights</em> (input→h1, h1→h2, h2→output), which corresponds to 2 hidden layers + 1 output layer. Conventions vary by source — when in doubt, count hidden layers explicitly.
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ================= 04 ================= -->
+<section id="s4">
+  <div class="kicker">04</div>
+  <h2>Weights, Biases &amp; Parameters</h2>
+  <p>Between layer \(l-1\) (with \(n_{l-1}\) neurons) and layer \(l\) (with \(n_l\) neurons) sits a <strong>weight matrix</strong> \(W^{[l]}\) of shape \((n_l, n_{l-1})\) and a <strong>bias vector</strong> \(b^{[l]}\) of shape \((n_l, 1)\).</p>
+  <div class="eqn">
+    \[ \text{Total parameters in layer } l = \underbrace{n_l \times n_{l-1}}_{\text{weights}} + \underbrace{n_l}_{\text{biases}} \]
+  </div>
+  <p><strong>Example:</strong> an ANN with input size 20 → hidden(64) → hidden(32) → output(1):</p>
+  <table>
+    <tr><th>Layer</th><th>Weights</th><th>Biases</th><th>Total</th></tr>
+    <tr><td>Input → Hidden 1</td><td>20 × 64 = 1,280</td><td>64</td><td>1,344</td></tr>
+    <tr><td>Hidden 1 → Hidden 2</td><td>64 × 32 = 2,048</td><td>32</td><td>2,080</td></tr>
+    <tr><td>Hidden 2 → Output</td><td>32 × 1 = 32</td><td>1</td><td>33</td></tr>
+    <tr><td><strong>Total</strong></td><td colspan="3"><strong>3,457 learnable parameters</strong></td></tr>
+  </table>
+  <p>Every one of these numbers starts at some initial value (Section 11) and is nudged, layer by layer, every training iteration, by gradient descent (Section 09) using gradients computed via backpropagation (Section 08). Training an ANN, mechanically, is nothing more than repeatedly adjusting every number in this table.</p>
+</section>
+
+<!-- ================= 05 ================= -->
+<section id="s5">
+  <div class="kicker">05</div>
+  <h2>Activation Functions</h2>
+  <p>Without a non-linear activation between layers, an ANN of any depth collapses mathematically into one linear layer. Activations are what give an ANN the ability to model curved, complex, real-world relationships.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg">
+      <style>.lbl{font-family:'JetBrains Mono',monospace;font-size:11px;fill:#9aa1af;}</style>
+      <line x1="60" y1="100" x2="720" y2="100" stroke="#3a4152"/>
+      <path d="M 30 170 C 60 170, 75 20, 150 20" stroke="#6fa8ff" stroke-width="2.5" fill="none"/>
+      <text x="45" y="15" class="lbl" style="fill:#6fa8ff">Sigmoid</text>
+      <path d="M 220 175 C 250 175, 265 15, 340 15" stroke="#f0a860" stroke-width="2.5" fill="none"/>
+      <text x="235" y="15" class="lbl" style="fill:#f0a860">Tanh</text>
+      <path d="M 380 100 L 470 100 L 560 20" stroke="#7fd1a0" stroke-width="2.5" fill="none"/>
+      <text x="410" y="15" class="lbl" style="fill:#7fd1a0">ReLU</text>
+      <path d="M 570 120 L 660 100 L 750 20" stroke="#e78a8a" stroke-width="2.5" fill="none"/>
+      <text x="590" y="15" class="lbl" style="fill:#e78a8a">Leaky ReLU</text>
+    </svg>
+    <div class="cap">Fig 3 — Common activation shapes. Which one to use in the hidden layers depends mostly on whether you value simplicity and speed (ReLU) or smoothness (ELU/GELU).</div>
+  </div>
+
+  <table>
+    <tr><th>Function</th><th>Formula</th><th>Where used</th></tr>
+    <tr><td>Sigmoid</td><td>\(1/(1+e^{-z})\)</td><td>Output layer, binary classification</td></tr>
+    <tr><td>Tanh</td><td>\((e^z-e^{-z})/(e^z+e^{-z})\)</td><td>Hidden layers (legacy), zero-centered</td></tr>
+    <tr><td>ReLU</td><td>\(\max(0,z)\)</td><td>Default hidden-layer choice</td></tr>
+    <tr><td>Leaky ReLU / ELU</td><td>small slope / smooth curve for \(z<0\)</td><td>When dying ReLU is a problem</td></tr>
+    <tr><td>Softmax</td><td>\(e^{z_i}/\sum_j e^{z_j}\)</td><td>Output layer, multi-class classification</td></tr>
+    <tr><td>Linear (none)</td><td>\(f(z)=z\)</td><td>Output layer, regression</td></tr>
+  </table>
+
+  <div class="card note">
+    <div class="label">Practical default</div>
+    <strong>ReLU everywhere in the hidden layers</strong>, and pick the output activation purely based on the task: sigmoid for binary, softmax for multi-class, nothing (linear) for regression. Reach for Leaky ReLU/ELU/GELU only if you observe dying-ReLU symptoms or are chasing the last bit of performance.
+  </div>
+</section>
+
+<!-- ================= 06 ================= -->
+<section id="s6">
+  <div class="kicker">06</div>
+  <h2>Forward Propagation</h2>
+  <p>The prediction pass: input flows through every layer, transformed by that layer's weights, bias, and activation, until it reaches the output.</p>
+  <div class="eqn">
+    \[ z^{[l]} = W^{[l]}a^{[l-1]} + b^{[l]}, \qquad a^{[l]} = f^{[l]}(z^{[l]}), \qquad a^{[0]}=x,\ \ \hat y = a^{[L]} \]
+  </div>
+  <div class="diagram">
+    <svg viewBox="0 0 760 140" xmlns="http://www.w3.org/2000/svg">
+      <style>.lbl{font-family:'JetBrains Mono',monospace;font-size:12px;fill:#9aa1af;}</style>
+      <rect x="20" y="40" width="90" height="50" rx="8" fill="#1b202b" stroke="#6fa8ff"/>
+      <text x="65" y="70" text-anchor="middle" class="lbl">x</text>
+      <path d="M110 65 H165" stroke="#7fd1a0" stroke-width="2" marker-end="url(#fp)"/>
+      <rect x="165" y="30" width="130" height="70" rx="8" fill="#1b202b" stroke="#f0a860"/>
+      <text x="230" y="60" text-anchor="middle" class="lbl">z¹, a¹</text>
+      <path d="M295 65 H350" stroke="#7fd1a0" stroke-width="2" marker-end="url(#fp)"/>
+      <rect x="350" y="30" width="130" height="70" rx="8" fill="#1b202b" stroke="#f0a860"/>
+      <text x="415" y="60" text-anchor="middle" class="lbl">z², a²</text>
+      <path d="M480 65 H535" stroke="#7fd1a0" stroke-width="2" marker-end="url(#fp)"/>
+      <rect x="535" y="30" width="130" height="70" rx="8" fill="#1b202b" stroke="#f0a860"/>
+      <text x="600" y="60" text-anchor="middle" class="lbl">ŷ = a³</text>
+      <path d="M665 65 H715" stroke="#7fd1a0" stroke-width="2" marker-end="url(#fp)"/>
+      <text x="720" y="70" class="lbl">out</text>
+      <defs><marker id="fp" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7fd1a0"/></marker></defs>
+    </svg>
+    <div class="cap">Fig 4 — Forward pass: strictly left to right, one layer's output is the next layer's input.</div>
+  </div>
+</section>
+
+<!-- ================= 07 ================= -->
+<section id="s7">
+  <div class="kicker">07</div>
+  <h2>Loss Functions</h2>
+  <p>The loss quantifies how wrong \(\hat y\) is compared to the true \(y\). Choice depends entirely on the task:</p>
+  <table>
+    <tr><th>Task</th><th>Output activation</th><th>Loss function</th></tr>
+    <tr><td>Regression</td><td>Linear (none)</td><td>MSE: \(\frac{1}{n}\sum(y-\hat y)^2\)</td></tr>
+    <tr><td>Binary classification</td><td>Sigmoid</td><td>Binary Cross-Entropy: \(-[y\log\hat y+(1-y)\log(1-\hat y)]\)</td></tr>
+    <tr><td>Multi-class classification</td><td>Softmax</td><td>Categorical Cross-Entropy: \(-\sum_k y_k\log\hat y_k\)</td></tr>
+  </table>
+  <p>Everything from here — backprop, gradient descent, optimizers — exists purely to make this one number as small as possible.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- ================= 08 ================= -->
+<section id="s8">
+  <div class="kicker">08</div>
+  <h2>Backpropagation</h2>
+  <p>Backprop applies the chain rule layer by layer, <strong>backward</strong> from the loss to the first weight, to compute \(\partial L/\partial W^{[l]}\) for every layer.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 760 150" xmlns="http://www.w3.org/2000/svg">
+      <style>.lbl{font-family:'JetBrains Mono',monospace;font-size:12px;fill:#9aa1af;}</style>
+      <rect x="20" y="40" width="120" height="60" rx="8" fill="#1b202b" stroke="#f0a860"/>
+      <text x="80" y="75" text-anchor="middle" class="lbl">Layer 1</text>
+      <rect x="200" y="40" width="120" height="60" rx="8" fill="#1b202b" stroke="#f0a860"/>
+      <text x="260" y="75" text-anchor="middle" class="lbl">Layer 2</text>
+      <rect x="380" y="40" width="120" height="60" rx="8" fill="#1b202b" stroke="#f0a860"/>
+      <text x="440" y="75" text-anchor="middle" class="lbl">Layer 3</text>
+      <rect x="560" y="40" width="140" height="60" rx="8" fill="#1b202b" stroke="#e78a8a"/>
+      <text x="630" y="75" text-anchor="middle" class="lbl">Loss L</text>
+      <path d="M140 60 H196" stroke="#7fd1a0" stroke-width="2" marker-end="url(#f2)"/>
+      <path d="M320 60 H376" stroke="#7fd1a0" stroke-width="2" marker-end="url(#f2)"/>
+      <path d="M500 60 H556" stroke="#7fd1a0" stroke-width="2" marker-end="url(#f2)"/>
+      <text x="320" y="25" class="lbl" style="fill:#7fd1a0">forward</text>
+      <path d="M556 95 H504" stroke="#e78a8a" stroke-width="2" marker-end="url(#b2)"/>
+      <path d="M376 95 H324" stroke="#e78a8a" stroke-width="2" marker-end="url(#b2)"/>
+      <path d="M196 95 H144" stroke="#e78a8a" stroke-width="2" marker-end="url(#b2)"/>
+      <text x="320" y="128" class="lbl" style="fill:#e78a8a">backward — chain rule</text>
+      <defs>
+        <marker id="f2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7fd1a0"/></marker>
+        <marker id="b2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e78a8a"/></marker>
+      </defs>
+    </svg>
+    <div class="cap">Fig 5 — Forward computes the prediction; backward computes how much every weight is to blame for the error.</div>
+  </div>
+
+  <p>For a 2-layer network (hidden → output), the derivation:</p>
+  <div class="eqn">
+    <div class="tag">Output layer error</div>
+    \[ \delta^{[2]} = \frac{\partial L}{\partial \hat y}\cdot f'(z^{[2]}) \]
+  </div>
+  <div class="eqn">
+    <div class="tag">Output layer gradients</div>
+    \[ \frac{\partial L}{\partial W^{[2]}} = \delta^{[2]}(a^{[1]})^T, \qquad \frac{\partial L}{\partial b^{[2]}} = \delta^{[2]} \]
+  </div>
+  <div class="eqn">
+    <div class="tag">Error pushed back into hidden layer</div>
+    \[ \delta^{[1]} = \big((W^{[2]})^T\delta^{[2]}\big)\odot f'(z^{[1]}) \]
+  </div>
+  <div class="eqn">
+    <div class="tag">Hidden layer gradients</div>
+    \[ \frac{\partial L}{\partial W^{[1]}} = \delta^{[1]}x^T, \qquad \frac{\partial L}{\partial b^{[1]}} = \delta^{[1]} \]
+  </div>
+  <p>The pattern repeats identically for every additional layer: pull the next layer's error back through its weights, multiply by the local activation derivative, repeat. In frameworks like Keras/PyTorch this is computed automatically via <strong>autodiff</strong> — but this is exactly what's happening under `loss.backward()` / during `model.fit()`.</p>
+</section>
+
+<!-- ================= 09 ================= -->
+<section id="s9">
+  <div class="kicker">09</div>
+  <h2>Weight Update Rule (Gradient Descent)</h2>
+  <div class="eqn">
+    \[ W \leftarrow W - \eta\frac{\partial L}{\partial W}, \qquad b \leftarrow b - \eta\frac{\partial L}{\partial b} \]
+  </div>
+  <p>\(\eta\) is the learning rate. Too high → overshoots and diverges. Too low → painfully slow, can stall on plateaus.</p>
+  <table>
+    <tr><th>Learning rate</th><th>Symptom</th></tr>
+    <tr><td>Too high</td><td>Loss oscillates wildly or explodes to NaN</td></tr>
+    <tr><td>Too low</td><td>Loss decreases, but barely, over hundreds of epochs</td></tr>
+    <tr><td>Right</td><td>Smooth, steady decrease, flattening near convergence</td></tr>
+  </table>
+</section>
+
+<!-- ================= 10 ================= -->
+<section id="s10">
+  <div class="kicker">10</div>
+  <h2>Optimizers</h2>
+  <p>The algorithm that decides <em>how</em> to apply the gradient. Plain gradient descent is the baseline; these improve on it:</p>
+  <table>
+    <tr><th>Optimizer</th><th>Idea</th><th>When to reach for it</th></tr>
+    <tr><td>SGD</td><td>Update per batch, no memory of past gradients</td><td>Rarely alone — usually paired with momentum</td></tr>
+    <tr><td>SGD + Momentum</td><td>Running velocity smooths updates</td><td>Good generalization, needs more tuning</td></tr>
+    <tr><td>RMSprop</td><td>Per-parameter adaptive learning rate</td><td>RNNs, non-stationary problems</td></tr>
+    <tr><td>Adam</td><td>Momentum + adaptive learning rate</td><td><strong>Default first choice</strong> for almost everything</td></tr>
+  </table>
+  <div class="eqn">
+    <div class="tag">Adam, in full</div>
+    \[ m_t=\beta_1 m_{t-1}+(1-\beta_1)g_t,\quad v_t=\beta_2 v_{t-1}+(1-\beta_2)g_t^2 \]
+    \[ \hat m_t=\frac{m_t}{1-\beta_1^t},\quad \hat v_t=\frac{v_t}{1-\beta_2^t},\quad W\leftarrow W-\frac{\eta}{\sqrt{\hat v_t}+\epsilon}\hat m_t \]
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ================= 11 ================= -->
+<section id="s11">
+  <div class="kicker">11</div>
+  <h2>Weight Initialization</h2>
+  <p>Random, correctly-scaled starting weights are what make training possible at all.</p>
+  <table>
+    <tr><th>Initializer</th><th>Pairs with</th><th>Variance</th></tr>
+    <tr><td>Zeros</td><td>Never — breaks symmetry, all neurons learn identically</td><td>—</td></tr>
+    <tr><td>Xavier / Glorot</td><td>Sigmoid, Tanh</td><td>\(1/n_{in}\)</td></tr>
+    <tr><td>He</td><td>ReLU, Leaky ReLU</td><td>\(2/n_{in}\)</td></tr>
+  </table>
+  <div class="card tip">
+    <div class="label">Rule of thumb</div>
+    ReLU hidden layers → He init. Sigmoid/tanh hidden layers → Xavier init. Modern frameworks default correctly per activation most of the time, but it's worth checking — this is a common silent cause of a "network that just won't train."
+  </div>
+</section>
+
+<!-- ================= 12 ================= -->
+<section id="s12">
+  <div class="kicker">12</div>
+  <h2>Regularization</h2>
+  <table>
+    <tr><th>Technique</th><th>How</th></tr>
+    <tr><td>L2 (weight decay)</td><td>Penalizes \(\sum w^2\), keeps weights small</td></tr>
+    <tr><td>L1</td><td>Penalizes \(\sum|w|\), pushes weights to exactly 0 (sparsity)</td></tr>
+    <tr><td>Dropout</td><td>Randomly zeroes neurons during training</td></tr>
+    <tr><td>Early stopping</td><td>Stop when validation loss stops improving</td></tr>
+    <tr><td>Data augmentation</td><td>Synthetic variations of training data</td></tr>
+  </table>
+  <div class="card warn">
+    <div class="label">Signature to watch for</div>
+    Train loss keeps dropping while validation loss rises — that gap is overfitting. Regularization exists specifically to close that gap.
+  </div>
+</section>
+
+<!-- ================= 13 ================= -->
+<section id="s13">
+  <div class="kicker">13</div>
+  <h2>Batch Normalization</h2>
+  <div class="eqn">
+    \[ \hat x = \frac{x-\mu_B}{\sqrt{\sigma_B^2+\epsilon}}, \qquad y = \gamma\hat x+\beta \]
+  </div>
+  <p>Normalizes each layer's input per mini-batch (zero mean, unit variance), then lets the network re-scale/shift it with learnable \(\gamma,\beta\). Typically placed as <code>Linear → BatchNorm → Activation</code>. Speeds up training, allows higher learning rates, adds mild regularization, reduces sensitivity to initialization.</p>
+</section>
+
+<!-- ================= 14 ================= -->
+<section id="s14">
+  <div class="kicker">14</div>
+  <h2>Vanishing &amp; Exploding Gradients</h2>
+  <p>Backprop multiplies many terms together across layers. If those terms are consistently &lt;1 (e.g. sigmoid derivatives), the product shrinks toward 0 — <strong>vanishing gradient</strong>, early layers stop learning. If consistently &gt;1, the product explodes — <strong>exploding gradient</strong>, loss spikes to NaN.</p>
+  <div class="eqn">\[ 0.25^{10}\approx 0.00000095 \qquad\qquad 2^{20}\approx 1{,}048{,}576 \]</div>
+  <table>
+    <tr><th>Problem</th><th>Fix</th></tr>
+    <tr><td>Vanishing</td><td>ReLU family, He/Xavier init, BatchNorm, skip connections</td></tr>
+    <tr><td>Exploding</td><td>Gradient clipping, smaller learning rate, BatchNorm, careful init</td></tr>
+  </table>
+</section>
+
+<div class="divider"></div>
+
+<!-- ================= 15 (Practical) ================= -->
+<section id="s15">
+  <div class="kicker">15</div>
+  <h2>Hyperparameters — All of Them, In One Place</h2>
+  <p>Everything above introduced hyperparameters piecemeal. Here they are together, since tuning an ANN is really just navigating this table.</p>
+  <table>
+    <tr><th>Hyperparameter</th><th>Controls</th><th>Typical starting point</th></tr>
+    <tr><td>Number of hidden layers</td><td>Depth / capacity</td><td>1–3 for tabular data</td></tr>
+    <tr><td>Neurons per layer</td><td>Width / capacity</td><td>32–256, often shrinking layer to layer</td></tr>
+    <tr><td>Activation function</td><td>Non-linearity</td><td>ReLU (hidden), task-specific (output)</td></tr>
+    <tr><td>Weight initializer</td><td>Starting point of training</td><td>He (ReLU) / Xavier (sigmoid/tanh)</td></tr>
+    <tr><td>Learning rate</td><td>Step size per update</td><td>1e-3 (with Adam)</td></tr>
+    <tr><td>Optimizer</td><td>Update rule</td><td>Adam</td></tr>
+    <tr><td>Batch size</td><td>Examples per update</td><td>32–128</td></tr>
+    <tr><td>Epochs</td><td>Passes over the full dataset</td><td>Set high + use early stopping</td></tr>
+    <tr><td>Dropout rate</td><td>Regularization strength</td><td>0.2–0.5</td></tr>
+    <tr><td>L2 lambda</td><td>Weight decay strength</td><td>1e-5 – 1e-3</td></tr>
+    <tr><td>Early stopping patience</td><td>How long to tolerate no improvement</td><td>10–20 epochs</td></tr>
+  </table>
+  <div class="card idea">
+    <div class="label">How to actually tune these</div>
+    Don't grid-search all of them at once. Fix everything at sane defaults (Adam, lr=1e-3, ReLU, He init, batch=32), get a working baseline, then tune in this order: <strong>architecture (layers/neurons)</strong> → <strong>learning rate</strong> → <strong>regularization (dropout/L2)</strong> → <strong>batch size</strong>. Changing one thing at a time is the only way to know what actually helped.
+  </div>
+</section>
+
+<!-- ================= 16 (Practical) ================= -->
+<section id="s16">
+  <div class="kicker">16</div>
+  <h2>Designing an Architecture — Practical Intuition</h2>
+
+  <h3>How many hidden layers?</h3>
+  <ul>
+    <li><strong>0 hidden layers</strong> — linear/logistic regression. Only for linearly separable problems.</li>
+    <li><strong>1–2 hidden layers</strong> — covers the large majority of tabular/structured-data problems. Start here.</li>
+    <li><strong>3+ hidden layers</strong> — only reach for this if 1–2 layers underfit (both train and val accuracy are low and plateaued). More depth ≠ automatically better; it mainly adds capacity and training difficulty.</li>
+  </ul>
+
+  <h3>How many neurons per layer?</h3>
+  <ul>
+    <li>Common pattern: start wide, narrow down — e.g. 128 → 64 → 32 → output. This funnels the representation down to the decision.</li>
+    <li>Rough starting width: somewhere between the number of input features and 2–3× that number for the first hidden layer, then shrink.</li>
+    <li>There's no formula that reliably beats experimentation — treat width as a hyperparameter to sweep, not something to derive.</li>
+  </ul>
+
+  <h3>Capacity vs. dataset size — the real constraint</h3>
+  <div class="diagram">
+    <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <style>.lbl{font-family:'JetBrains Mono',monospace;font-size:12px;fill:#9aa1af;}</style>
+      <line x1="60" y1="170" x2="660" y2="170" stroke="#3a4152"/>
+      <line x1="60" y1="20" x2="60" y2="170" stroke="#3a4152"/>
+      <path d="M60 160 C 200 40, 500 20, 640 15" stroke="#e78a8a" stroke-width="2.5" fill="none"/>
+      <text x="480" y="40" class="lbl" style="fill:#e78a8a">too much capacity → overfits</text>
+      <path d="M60 165 C 250 150, 450 130, 640 120" stroke="#7fd1a0" stroke-width="2.5" fill="none"/>
+      <text x="440" y="145" class="lbl" style="fill:#7fd1a0">right-sized → generalizes</text>
+      <path d="M60 168 C 300 160, 500 158, 640 156" stroke="#6fa8ff" stroke-width="2.5" fill="none"/>
+      <text x="440" y="180" class="lbl" style="fill:#6fa8ff">too little capacity → underfits</text>
+      <text x="20" y="15" class="lbl">error</text>
+      <text x="600" y="190" class="lbl">model capacity →</text>
+    </svg>
+    <div class="cap">Fig 6 — The real design question isn't "how deep should it be" in the abstract — it's "how much capacity does this much data, for this task, actually support." Small dataset + huge network = memorization, not learning.</div>
+  </div>
+  <p><strong>Rule of thumb:</strong> a network with far more parameters than training examples will happily memorize the training set. If you have a few thousand rows, keep the network modest (1–2 hidden layers, 32–128 neurons) and lean on regularization rather than reaching for depth.</p>
+
+  <h3>Choosing the output layer</h3>
+  <table>
+    <tr><th>Task</th><th>Output neurons</th><th>Activation</th></tr>
+    <tr><td>Binary classification</td><td>1</td><td>Sigmoid</td></tr>
+    <tr><td>Multi-class classification (K classes)</td><td>K</td><td>Softmax</td></tr>
+    <tr><td>Regression (single value)</td><td>1</td><td>None (linear)</td></tr>
+    <tr><td>Multi-output regression</td><td>N</td><td>None (linear)</td></tr>
+  </table>
+</section>
+
+<div class="divider"></div>
+
+<!-- ================= 17 (Practical) ================= -->
+<section id="s17">
+  <div class="kicker">17</div>
+  <h2>Step-by-Step Build Workflow</h2>
+  <p>The order that actually works in practice, every time:</p>
+  <ol>
+    <li><strong>Understand the task</strong> — regression / binary / multi-class? This decides loss + output activation before anything else.</li>
+    <li><strong>Prepare the data</strong> — handle missing values, encode categoricals, split train/val/test, <strong>scale features</strong> (critical for ANNs).</li>
+    <li><strong>Build a small baseline</strong> — 1 hidden layer, ReLU, Adam, no regularization. Get it training at all before optimizing anything.</li>
+    <li><strong>Check the loss curve</strong> — is it decreasing? If not, debug before tuning (see Section 18).</li>
+    <li><strong>Add capacity if underfitting</strong> — more neurons/layers, train longer.</li>
+    <li><strong>Add regularization if overfitting</strong> — dropout, L2, early stopping, more data/augmentation.</li>
+    <li><strong>Tune the learning rate</strong> — usually the single highest-leverage hyperparameter.</li>
+    <li><strong>Evaluate properly</strong> — accuracy alone is not enough; use precision/recall/F1/ROC-AUC for classification, especially with imbalanced classes.</li>
+    <li><strong>Save the best checkpoint</strong> — via early stopping's <code>restore_best_weights</code> or explicit checkpointing.</li>
+    <li><strong>Test on truly unseen data</strong> — the test set, touched exactly once, at the very end.</li>
+  </ol>
+</section>
+
+<!-- ================= 18 (Practical) ================= -->
+<section id="s18">
+  <div class="kicker">18</div>
+  <h2>Debugging Checklist</h2>
+  <table>
+    <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Loss is NaN / infinite</td><td>Exploding gradients, learning rate too high, unscaled inputs</td><td>Lower learning rate, scale features, gradient clipping, check for div-by-zero in custom losses</td></tr>
+    <tr><td>Loss barely moves at all</td><td>Learning rate too low, vanishing gradients, bad initialization, dead ReLUs</td><td>Raise learning rate, switch to He init + ReLU, check activation saturation</td></tr>
+    <tr><td>Train accuracy high, val accuracy much lower</td><td>Overfitting</td><td>Dropout, L2, early stopping, more data, simpler architecture</td></tr>
+    <tr><td>Both train and val accuracy low, plateaued</td><td>Underfitting</td><td>More capacity (layers/neurons), train longer, check learning rate isn't too low</td></tr>
+    <tr><td>Loss oscillates wildly</td><td>Learning rate too high, batch size too small</td><td>Lower learning rate, increase batch size, add BatchNorm</td></tr>
+    <tr><td>Accuracy stuck at "always predict majority class"</td><td>Class imbalance</td><td>Class weights, resampling, use F1/ROC-AUC instead of accuracy</td></tr>
+    <tr><td>Good training metrics, poor real-world performance</td><td>Data leakage, train/test distribution mismatch</td><td>Re-check preprocessing order (fit scaler on train only), verify no target leakage into features</td></tr>
+    <tr><td>Training is extremely slow</td><td>Batch size too small, model too large for hardware, inefficient data pipeline</td><td>Increase batch size, use a lighter architecture, profile the data loading</td></tr>
+  </table>
+</section>
+
+<div class="divider"></div>
+
+<!-- ================= 19 ================= -->
+<section id="s19">
+  <div class="kicker">19</div>
+  <h2>ANN vs CNN vs RNN vs Transformer — Where This Fits</h2>
+  <table>
+    <tr><th>Architecture</th><th>Best for</th><th>What's different from a plain ANN</th></tr>
+    <tr><td>ANN / MLP</td><td>Tabular data</td><td>— (this is the baseline)</td></tr>
+    <tr><td>CNN</td><td>Images, spatial grids</td><td>Convolutional filters replace some dense layers — parameter sharing + local receptive fields</td></tr>
+    <tr><td>RNN / LSTM / GRU</td><td>Sequences, time series</td><td>A hidden state is carried across time steps; same weights reused every step</td></tr>
+    <tr><td>Transformer</td><td>Text, and increasingly everything</td><td>Self-attention replaces recurrence — every position sees every other position directly</td></tr>
+  </table>
+  <p>All four still use: neurons, weights, activations, loss functions, backpropagation, gradient descent, optimizers, regularization, and initialization — exactly as covered in this document. Only the way information flows between neurons changes.</p>
+</section>
+
+<!-- ================= 20 ================= -->
+<section id="s20">
+  <div class="kicker">20</div>
+  <h2>Glossary</h2>
+  <dl class="glossary">
+    <dt>ANN / MLP</dt><dd>Fully-connected feedforward neural network — the base architecture this document covers.</dd>
+    <dt>Dense / Fully-connected layer</dt><dd>A layer where every neuron connects to every neuron in the previous layer.</dd>
+    <dt>Parameter</dt><dd>A learnable weight or bias.</dd>
+    <dt>Hyperparameter</dt><dd>A setting chosen before training (learning rate, layers, batch size...) — not learned by gradient descent.</dd>
+    <dt>Epoch</dt><dd>One full pass through the training dataset.</dd>
+    <dt>Batch size</dt><dd>Number of examples processed before one weight update.</dd>
+    <dt>Overfitting / Underfitting</dt><dd>Model too specialized to training data / model too simple to capture the pattern at all.</dd>
+    <dt>Checkpoint</dt><dd>A saved snapshot of model weights at a given point in training.</dd>
+    <dt>Autodiff</dt><dd>Automatic differentiation — how frameworks like TensorFlow/PyTorch compute backprop gradients without manual derivation.</dd>
+    <dt>Class imbalance</dt><dd>When one class vastly outnumbers another in the training data, skewing naive accuracy.</dd>
+  </dl>
+</section>
+
+</main>
+</div>
+
+<footer>
+  Artificial Neural Networks — full reference · companion to the Deep Learning Foundations doc and the Keras ANN notebook
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANN Playground — Practical Intuition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1218; --bg-panel:#161a23; --bg-card:#1b202b;
+  --text:#e9e7e2; --text-dim:#9aa1af; --text-faint:#5f6675;
+  --blue:#6fa8ff; --amber:#f0a860; --green:#7fd1a0; --red:#e78a8a; --purple:#b79cf0;
+  --border:#272c38; --border-soft:#1e2330; --radius:10px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.5;}
+::selection{background:var(--blue);color:#0f1218;}
+
+.hero{padding:44px 5vw 30px;border-bottom:1px solid var(--border);
+  background:radial-gradient(circle at 85% 15%, rgba(111,168,255,0.10), transparent 45%),
+             radial-gradient(circle at 10% 90%, rgba(240,168,96,0.08), transparent 40%);}
+.hero .eyebrow{font-family:'JetBrains Mono',monospace;color:var(--amber);letter-spacing:.14em;font-size:11.5px;text-transform:uppercase;margin-bottom:12px;}
+.hero h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(26px,3.6vw,38px);margin:0 0 10px;letter-spacing:-0.01em;}
+.hero h1 em{font-style:italic;color:var(--blue);}
+.hero p{color:var(--text-dim);font-size:15px;max-width:720px;margin:0;}
+
+.wrap{max-width:1400px;margin:0 auto;padding:28px 5vw 60px;}
+.grid{display:grid;grid-template-columns:290px 1fr 300px;gap:20px;align-items:start;}
+@media(max-width:1100px){.grid{grid-template-columns:1fr;}}
+
+/* ---- panels ---- */
+.panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;}
+.panel + .panel{margin-top:16px;}
+.panel h3{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin:0 0 14px;}
+
+/* ---- controls ---- */
+.field{margin-bottom:16px;}
+.field label{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-dim);margin-bottom:6px;font-family:'JetBrains Mono',monospace;}
+.field label span.val{color:var(--blue);}
+input[type=range]{width:100%;accent-color:var(--blue);}
+.btnrow{display:flex;flex-wrap:wrap;gap:6px;}
+.btn{
+  background:var(--bg-panel);border:1px solid var(--border);color:var(--text-dim);
+  font-family:'JetBrains Mono',monospace;font-size:12px;padding:7px 12px;border-radius:7px;
+  cursor:pointer;transition:.15s;
+}
+.btn:hover{color:var(--text);border-color:var(--blue);}
+.btn.active{background:var(--blue);color:#0f1218;border-color:var(--blue);font-weight:600;}
+.btn.wide{flex:1;text-align:center;}
+.stepper{display:flex;align-items:center;gap:8px;}
+.stepper button{
+  width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--bg-panel);
+  color:var(--text);cursor:pointer;font-size:14px;line-height:1;
+}
+.stepper button:hover{border-color:var(--blue);}
+.stepper .n{font-family:'JetBrains Mono',monospace;width:22px;text-align:center;color:var(--green);}
+.layerrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12.5px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;}
+
+.playbar{display:flex;gap:8px;margin-top:4px;}
+.playbar .btn{flex:1;}
+#playBtn.active{background:var(--green);border-color:var(--green);color:#0f1218;}
+
+/* ---- main viz ---- */
+.vizcard{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.vizhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+.vizhead h3{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin:0;}
+canvas{display:block;width:100%;border-radius:6px;background:#0c0e13;}
+#boundaryCanvas{cursor:crosshair;}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px;}
+.stat{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+.stat .k{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);}
+.stat .v{font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--text);margin-top:3px;}
+.stat .v.green{color:var(--green);}
+.stat .v.red{color:var(--red);}
+
+.insight{
+  margin-top:14px;padding:12px 14px;border-radius:8px;background:var(--bg-card);
+  border-left:3px solid var(--purple);font-size:13px;color:#d7d5cf;
+  font-family:'Inter',sans-serif;min-height:20px;
+}
+.insight b{color:var(--purple);font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:4px;}
+
+.legend{display:flex;gap:16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint);margin-top:8px;}
+.legend span{display:flex;align-items:center;gap:6px;}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+.tips{font-size:12.5px;color:var(--text-dim);}
+.tips li{margin:9px 0;}
+.tips code{font-family:'JetBrains Mono',monospace;background:var(--bg-panel);padding:1px 6px;border-radius:4px;color:var(--green);font-size:.85em;border:1px solid var(--border-soft);}
+
+footer{padding:30px 5vw;border-top:1px solid var(--border);color:var(--text-faint);font-family:'JetBrains Mono',monospace;font-size:12px;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="eyebrow">// practical intuition — companion to the ANN reference doc</div>
+  <h1>Watch a network <em>actually learn.</em></h1>
+  <p>Every control here maps to a section of the theory doc. Change one thing at a time and watch the decision boundary, the network diagram, and the loss curve react — that reaction <em>is</em> the intuition.</p>
+</div>
+
+<div class="wrap">
+<div class="grid">
+
+  <!-- ================= LEFT: CONTROLS ================= -->
+  <div>
+    <div class="panel">
+      <h3>Dataset</h3>
+      <div class="btnrow" id="datasetButtons"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Architecture</h3>
+      <div id="layerControls"></div>
+      <div class="field" style="margin-top:2px;">
+        <label>Activation (hidden layers)</label>
+        <div class="btnrow" id="activationButtons"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Training</h3>
+      <div class="field">
+        <label>Learning rate <span class="val" id="lrVal">0.30</span></label>
+        <input type="range" id="lrSlider" min="0" max="100" value="70">
+      </div>
+      <div class="field">
+        <label>L2 regularization <span class="val" id="l2Val">0.0000</span></label>
+        <input type="range" id="l2Slider" min="0" max="100" value="0">
+      </div>
+      <div class="field">
+        <label>Speed (steps / frame) <span class="val" id="speedVal">1</span></label>
+        <input type="range" id="speedSlider" min="1" max="20" value="1">
+      </div>
+      <div class="playbar">
+        <button class="btn wide active" id="playBtn">⏸ Pause</button>
+        <button class="btn wide" id="stepBtn">Step</button>
+      </div>
+      <div class="playbar">
+        <button class="btn wide" id="resetBtn">↺ Reset weights</button>
+        <button class="btn wide" id="newDataBtn">⟳ New data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CENTER: DECISION BOUNDARY ================= -->
+  <div>
+    <div class="vizcard">
+      <div class="vizhead">
+        <h3>Decision boundary</h3>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint);">input space, x1 × x2</span>
+      </div>
+      <canvas id="boundaryCanvas" width="560" height="560"></canvas>
+      <div class="legend">
+        <span><span class="dot" style="background:#6fa8ff"></span>class 0</span>
+        <span><span class="dot" style="background:#f0a860"></span>class 1</span>
+        <span style="margin-left:auto;">background shade = predicted probability</span>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px;">
+      <h3>Loss curve</h3>
+      <canvas id="lossCanvas" width="900" height="160"></canvas>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="k">Iteration</div><div class="v" id="statIter">0</div></div>
+      <div class="stat"><div class="k">Loss</div><div class="v red" id="statLoss">–</div></div>
+      <div class="stat"><div class="k">Accuracy</div><div class="v green" id="statAcc">–</div></div>
+      <div class="stat"><div class="k">Parameters</div><div class="v" id="statParams">–</div></div>
+    </div>
+
+    <div class="insight" id="insightBox"><b>Live read</b>Press play to start training.</div>
+  </div>
+
+  <!-- ================= RIGHT: NETWORK DIAGRAM + TIPS ================= -->
+  <div>
+    <div class="vizcard">
+      <div class="vizhead"><h3>Network diagram</h3></div>
+      <canvas id="netCanvas" width="280" height="360"></canvas>
+      <div class="legend">
+        <span><span class="dot" style="background:#7fd1a0"></span>positive weight</span>
+        <span><span class="dot" style="background:#e78a8a"></span>negative weight</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Things to try</h3>
+      <ul class="tips">
+        <li>Switch to <code>Spiral</code> with only <code>[2]</code> neurons in one hidden layer — watch it fail to separate the classes. That's <b>underfitting</b>.</li>
+        <li>Set learning rate near the top of the slider — watch the loss curve spike and oscillate instead of settling. That's <b>too high a learning rate</b>.</li>
+        <li>Push L2 regularization high — the boundary goes soft and blurry as weights are forced toward zero.</li>
+        <li>Compare <code>Sigmoid</code> vs <code>ReLU</code> on <code>Spiral</code> with 3 layers — sigmoid trains visibly slower. That's <b>vanishing gradient</b> in action.</li>
+        <li>Set every hidden layer to <code>0</code> neurons — the boundary can only ever be a straight line, exactly like a lone perceptron.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<footer>ANN Playground · practical intuition companion to the ANN reference doc &amp; theory doc · all training runs live in your browser, nothing leaves this page</footer>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   1. NETWORK MATH  (mirrors the formulas in the reference documents)
+===================================================================== */
+const ACT = {
+  relu:    { f: z => Math.max(0, z), df: a => (a > 0 ? 1 : 0) },
+  tanh:    { f: z => Math.tanh(z),   df: a => 1 - a * a },
+  sigmoid: { f: z => 1 / (1 + Math.exp(-z)), df: a => a * (1 - a) },
+};
+
+function randn() {
+  let u = 1 - Math.random(), v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+function createNetwork(layerSizes, actName) {
+  const scale = actName === "relu" ? 2 : 1; // He vs Xavier-ish
+  const W = [], b = [];
+  for (let l = 0; l < layerSizes.length - 1; l++) {
+    const nIn = layerSizes[l], nOut = layerSizes[l + 1];
+    const std = Math.sqrt(scale / nIn);
+    const Wl = [];
+    for (let j = 0; j < nOut; j++) {
+      const row = [];
+      for (let i = 0; i < nIn; i++) row.push(randn() * std);
+      Wl.push(row);
+    }
+    W.push(Wl);
+    b.push(new Array(nOut).fill(0));
+  }
+  return { layerSizes, W, b, actName };
+}
+
+function forward(net, x) {
+  const { W, b, actName, layerSizes } = net;
+  const act = ACT[actName];
+  const as = [x];
+  let a = x;
+  const L = W.length;
+  for (let l = 0; l < L; l++) {
+    const isOutput = l === L - 1;
+    const nOut = layerSizes[l + 1];
+    const aNext = new Array(nOut);
+    for (let j = 0; j < nOut; j++) {
+      let s = b[l][j];
+      for (let i = 0; i < a.length; i++) s += W[l][j][i] * a[i];
+      aNext[j] = isOutput ? ACT.sigmoid.f(s) : act.f(s);
+    }
+    as.push(aNext);
+    a = aNext;
+  }
+  return as;
+}
+
+function trainStep(net, X, Y, lr, l2) {
+  const { W, b, actName, layerSizes } = net;
+  const act = ACT[actName];
+  const L = W.length;
+  const m = X.length;
+
+  const dW = W.map(Wl => Wl.map(row => row.map(() => 0)));
+  const db = b.map(bl => bl.map(() => 0));
+
+  let totalLoss = 0, correct = 0;
+
+  for (let n = 0; n < m; n++) {
+    const x = X[n], y = Y[n];
+    const as = forward(net, x);
+    const yhat = as[L][0];
+    const eps = 1e-9;
+    totalLoss += -(y * Math.log(yhat + eps) + (1 - y) * Math.log(1 - yhat + eps));
+    if ((yhat >= 0.5 ? 1 : 0) === y) correct++;
+
+    let delta = [yhat - y]; // BCE + sigmoid simplifies cleanly
+
+    for (let l = L - 1; l >= 0; l--) {
+      const aPrev = as[l];
+      const nOut = layerSizes[l + 1];
+
+      for (let j = 0; j < nOut; j++) {
+        db[l][j] += delta[j];
+        const Wlj = W[l][j], dWlj = dW[l][j];
+        for (let i = 0; i < aPrev.length; i++) dWlj[i] += delta[j] * aPrev[i];
+      }
+
+      if (l > 0) {
+        const nIn = layerSizes[l];
+        const newDelta = new Array(nIn).fill(0);
+        for (let i = 0; i < nIn; i++) {
+          let s = 0;
+          for (let j = 0; j < nOut; j++) s += W[l][j][i] * delta[j];
+          newDelta[i] = s * act.df(as[l][i]);
+        }
+        delta = newDelta;
+      }
+    }
+  }
+
+  for (let l = 0; l < L; l++) {
+    for (let j = 0; j < W[l].length; j++) {
+      for (let i = 0; i < W[l][j].length; i++) {
+        const grad = dW[l][j][i] / m + l2 * W[l][j][i];
+        W[l][j][i] -= lr * grad;
+      }
+      b[l][j] -= lr * (db[l][j] / m);
+    }
+  }
+
+  return { loss: totalLoss / m, acc: correct / m };
+}
+
+/* =====================================================================
+   2. DATASETS
+===================================================================== */
+function genXOR(n = 220) {
+  const X = [], Y = [];
+  for (let i = 0; i < n; i++) {
+    const x1 = Math.random() * 2 - 1, x2 = Math.random() * 2 - 1;
+    const label = (x1 * x2 >= 0) ? 1 : 0;
+    X.push([x1 + (Math.random()-0.5)*0.15, x2 + (Math.random()-0.5)*0.15]);
+    Y.push(label);
+  }
+  return { X, Y };
+}
+
+function genCircle(n = 220) {
+  const X = [], Y = [];
+  for (let i = 0; i < n; i++) {
+    const r = Math.random();
+    const angle = Math.random() * Math.PI * 2;
+    const isOuter = r > 0.5;
+    const radius = isOuter ? 0.65 + Math.random()*0.3 : Math.random()*0.4;
+    const x1 = radius * Math.cos(angle);
+    const x2 = radius * Math.sin(angle);
+    X.push([x1, x2]);
+    Y.push(isOuter ? 1 : 0);
+  }
+  return { X, Y };
+}
+
+function genBlobs(n = 220) {
+  const X = [], Y = [];
+  const centers = [[-0.5,-0.5,0],[0.5,0.5,0],[0.5,-0.5,1],[-0.5,0.5,1]];
+  for (let i = 0; i < n; i++) {
+    const c = centers[Math.floor(Math.random()*centers.length)];
+    const x1 = c[0] + randn()*0.18;
+    const x2 = c[1] + randn()*0.18;
+    X.push([x1, x2]);
+    Y.push(c[2]);
+  }
+  return { X, Y };
+}
+
+function genSpiral(n = 220) {
+  const X = [], Y = [];
+  const half = Math.floor(n/2);
+  function spiral(count, label, rot) {
+    for (let i = 0; i < count; i++) {
+      const t = i / count * 3.2;
+      const r = t * 0.35;
+      const angle = t * Math.PI * 2 + rot;
+      const x1 = r * Math.cos(angle) + (Math.random()-0.5)*0.05;
+      const x2 = r * Math.sin(angle) + (Math.random()-0.5)*0.05;
+      X.push([x1, x2]);
+      Y.push(label);
+    }
+  }
+  spiral(half, 0, 0);
+  spiral(n - half, 1, Math.PI);
+  return { X, Y };
+}
+
+const DATASETS = { xor: genXOR, circle: genCircle, blobs: genBlobs, spiral: genSpiral };
+
+/* =====================================================================
+   3. STATE
+===================================================================== */
+const state = {
+  dataset: "xor",
+  data: genXOR(),
+  hidden: [6, 4, 0],       // 0 = layer disabled
+  activation: "relu",
+  lr: 0.3,
+  l2: 0.0,
+  speed: 1,
+  playing: true,
+  iter: 0,
+  lossHistory: [],
+  accHistory: [],
+};
+
+function activeHiddenSizes() {
+  return state.hidden.filter(h => h > 0);
+}
+
+function buildNet() {
+  const layerSizes = [2, ...activeHiddenSizes(), 1];
+  state.net = createNetwork(layerSizes, state.activation);
+  state.iter = 0;
+  state.lossHistory = [];
+  state.accHistory = [];
+}
+
+buildNet();
+
+/* =====================================================================
+   4. UI — CONTROLS
+===================================================================== */
+const datasetButtonsEl = document.getElementById("datasetButtons");
+const DATASET_LABELS = { xor: "XOR", circle: "Circle", blobs: "Blobs", spiral: "Spiral" };
+Object.keys(DATASET_LABELS).forEach(key => {
+  const b = document.createElement("button");
+  b.className = "btn wide" + (key === state.dataset ? " active" : "");
+  b.textContent = DATASET_LABELS[key];
+  b.onclick = () => {
+    state.dataset = key;
+    state.data = DATASETS[key]();
+    buildNet();
+    [...datasetButtonsEl.children].forEach(c => c.classList.remove("active"));
+    b.classList.add("active");
+  };
+  datasetButtonsEl.appendChild(b);
+});
+
+const layerControlsEl = document.getElementById("layerControls");
+function renderLayerControls() {
+  layerControlsEl.innerHTML = "";
+  state.hidden.forEach((val, idx) => {
+    const row = document.createElement("div");
+    row.className = "layerrow";
+    row.innerHTML = `<span>Hidden layer ${idx+1}</span>`;
+    const stepper = document.createElement("div");
+    stepper.className = "stepper";
+    const minus = document.createElement("button"); minus.textContent = "–";
+    const num = document.createElement("span"); num.className = "n"; num.textContent = val;
+    const plus = document.createElement("button"); plus.textContent = "+";
+    minus.onclick = () => { state.hidden[idx] = Math.max(0, state.hidden[idx]-1); renderLayerControls(); buildNet(); };
+    plus.onclick  = () => { state.hidden[idx] = Math.min(8, state.hidden[idx]+1); renderLayerControls(); buildNet(); };
+    stepper.appendChild(minus); stepper.appendChild(num); stepper.appendChild(plus);
+    row.appendChild(stepper);
+    layerControlsEl.appendChild(row);
+  });
+}
+renderLayerControls();
+
+const activationButtonsEl = document.getElementById("activationButtons");
+["relu","tanh","sigmoid"].forEach(name => {
+  const b = document.createElement("button");
+  b.className = "btn" + (name === state.activation ? " active" : "");
+  b.textContent = name === "relu" ? "ReLU" : name === "tanh" ? "Tanh" : "Sigmoid";
+  b.onclick = () => {
+    state.activation = name;
+    buildNet();
+    [...activationButtonsEl.children].forEach(c => c.classList.remove("active"));
+    b.classList.add("active");
+  };
+  activationButtonsEl.appendChild(b);
+});
+
+const lrSlider = document.getElementById("lrSlider");
+const lrVal = document.getElementById("lrVal");
+function updateLR() {
+  // log scale from 0.001 to 2.0
+  const t = lrSlider.value / 100;
+  state.lr = Math.pow(10, -3 + t * (Math.log10(2) + 3));
+  lrVal.textContent = state.lr.toFixed(state.lr < 0.01 ? 4 : 3);
+}
+lrSlider.oninput = updateLR;
+updateLR();
+
+const l2Slider = document.getElementById("l2Slider");
+const l2Val = document.getElementById("l2Val");
+function updateL2() {
+  const t = l2Slider.value / 100;
+  state.l2 = t * 0.1;
+  l2Val.textContent = state.l2.toFixed(4);
+}
+l2Slider.oninput = updateL2;
+updateL2();
+
+const speedSlider = document.getElementById("speedSlider");
+const speedVal = document.getElementById("speedVal");
+speedSlider.oninput = () => { state.speed = parseInt(speedSlider.value); speedVal.textContent = state.speed; };
+
+const playBtn = document.getElementById("playBtn");
+playBtn.onclick = () => {
+  state.playing = !state.playing;
+  playBtn.textContent = state.playing ? "⏸ Pause" : "▶ Play";
+  playBtn.classList.toggle("active", state.playing);
+};
+document.getElementById("stepBtn").onclick = () => { doTrainStep(); render(); };
+document.getElementById("resetBtn").onclick = () => { buildNet(); };
+document.getElementById("newDataBtn").onclick = () => { state.data = DATASETS[state.dataset](); buildNet(); };
+
+/* =====================================================================
+   5. TRAINING LOOP
+===================================================================== */
+function doTrainStep() {
+  const { loss, acc } = trainStep(state.net, state.data.X, state.data.Y, state.lr, state.l2);
+  state.iter++;
+  state.lossHistory.push(loss);
+  state.accHistory.push(acc);
+  if (state.lossHistory.length > 400) { state.lossHistory.shift(); state.accHistory.shift(); }
+  state.lastLoss = loss;
+  state.lastAcc = acc;
+}
+
+/* =====================================================================
+   6. RENDERING
+===================================================================== */
+const boundaryCanvas = document.getElementById("boundaryCanvas");
+const bctx = boundaryCanvas.getContext("2d");
+const RES = 70; // grid resolution for the heatmap
+
+function colorForProb(p) {
+  // blue (class0) <-> amber (class1)
+  const c0 = [111,168,255], c1 = [240,168,96];
+  const r = Math.round(c0[0] + (c1[0]-c0[0])*p);
+  const g = Math.round(c0[1] + (c1[1]-c0[1])*p);
+  const b = Math.round(c0[2] + (c1[2]-c0[2])*p);
+  return [r,g,b];
+}
+
+function drawBoundary() {
+  const W = boundaryCanvas.width, H = boundaryCanvas.height;
+  const img = bctx.createImageData(RES, RES);
+  const range = 1.3;
+  for (let gy = 0; gy < RES; gy++) {
+    for (let gx = 0; gx < RES; gx++) {
+      const x1 = (gx / (RES-1)) * 2*range - range;
+      const x2 = range - (gy / (RES-1)) * 2*range;
+      const as = forward(state.net, [x1, x2]);
+      const p = as[as.length-1][0];
+      const [r,g,b] = colorForProb(p);
+      const idx = (gy*RES+gx)*4;
+      img.data[idx]=r; img.data[idx+1]=g; img.data[idx+2]=b; img.data[idx+3]=235;
+    }
+  }
+  // draw scaled-up heatmap via offscreen canvas
+  const off = document.createElement("canvas");
+  off.width = RES; off.height = RES;
+  off.getContext("2d").putImageData(img, 0, 0);
+  bctx.clearRect(0,0,W,H);
+  bctx.imageSmoothingEnabled = true;
+  bctx.drawImage(off, 0, 0, W, H);
+
+  // data points
+  const { X, Y } = state.data;
+  for (let i = 0; i < X.length; i++) {
+    const px = ((X[i][0] + range) / (2*range)) * W;
+    const py = ((range - X[i][1]) / (2*range)) * H;
+    bctx.beginPath();
+    bctx.arc(px, py, 4.2, 0, Math.PI*2);
+    bctx.fillStyle = Y[i] === 1 ? "#f0a860" : "#6fa8ff";
+    bctx.fill();
+    bctx.lineWidth = 1.4;
+    bctx.strokeStyle = "#0f1218";
+    bctx.stroke();
+  }
+}
+
+const lossCanvas = document.getElementById("lossCanvas");
+const lctx = lossCanvas.getContext("2d");
+function drawLossChart() {
+  const W = lossCanvas.width, H = lossCanvas.height;
+  lctx.clearRect(0,0,W,H);
+  const hist = state.lossHistory;
+  if (hist.length < 2) return;
+  const maxLoss = Math.max(...hist, 0.05);
+  lctx.beginPath();
+  lctx.strokeStyle = "#e78a8a";
+  lctx.lineWidth = 2;
+  hist.forEach((v, i) => {
+    const x = (i/(hist.length-1)) * W;
+    const y = H - (v/maxLoss) * (H-10) - 5;
+    if (i===0) lctx.moveTo(x,y); else lctx.lineTo(x,y);
+  });
+  lctx.stroke();
+
+  // accuracy overlay
+  const accHist = state.accHistory;
+  lctx.beginPath();
+  lctx.strokeStyle = "#7fd1a0";
+  lctx.lineWidth = 1.6;
+  accHist.forEach((v,i) => {
+    const x = (i/(accHist.length-1)) * W;
+    const y = H - v*(H-10) - 5;
+    if (i===0) lctx.moveTo(x,y); else lctx.lineTo(x,y);
+  });
+  lctx.stroke();
+
+  lctx.font = "11px JetBrains Mono";
+  lctx.fillStyle = "#e78a8a"; lctx.fillText("loss", 8, 16);
+  lctx.fillStyle = "#7fd1a0"; lctx.fillText("accuracy", 8, 30);
+}
+
+const netCanvas = document.getElementById("netCanvas");
+const nctx = netCanvas.getContext("2d");
+function drawNetDiagram() {
+  const W = netCanvas.width, H = netCanvas.height;
+  nctx.clearRect(0,0,W,H);
+  const sizes = state.net.layerSizes;
+  const L = sizes.length;
+  const xs = sizes.map((_, l) => 30 + l * ((W-60)/(L-1||1)));
+  const positions = sizes.map((n, l) => {
+    const ys = [];
+    const gap = (H-40)/(n+1);
+    for (let j=0;j<n;j++) ys.push(20 + gap*(j+1));
+    return ys;
+  });
+
+  // edges
+  for (let l = 0; l < state.net.W.length; l++) {
+    for (let j = 0; j < state.net.W[l].length; j++) {
+      for (let i = 0; i < state.net.W[l][j].length; i++) {
+        const w = state.net.W[l][j][i];
+        const x1 = xs[l], y1 = positions[l][i];
+        const x2 = xs[l+1], y2 = positions[l+1][j];
+        nctx.beginPath();
+        nctx.moveTo(x1,y1); nctx.lineTo(x2,y2);
+        const mag = Math.min(Math.abs(w), 1.5);
+        nctx.strokeStyle = w >= 0 ? `rgba(127,209,160,${0.15+mag*0.5})` : `rgba(231,138,138,${0.15+mag*0.5})`;
+        nctx.lineWidth = 0.6 + mag*1.8;
+        nctx.stroke();
+      }
+    }
+  }
+  // nodes
+  for (let l = 0; l < L; l++) {
+    for (let j = 0; j < sizes[l]; j++) {
+      nctx.beginPath();
+      nctx.arc(xs[l], positions[l][j], 7, 0, Math.PI*2);
+      nctx.fillStyle = "#1b202b";
+      nctx.fill();
+      nctx.lineWidth = 1.6;
+      nctx.strokeStyle = l===0 ? "#6fa8ff" : (l===L-1 ? "#7fd1a0" : "#f0a860");
+      nctx.stroke();
+    }
+  }
+}
+
+function updateStats() {
+  document.getElementById("statIter").textContent = state.iter;
+  document.getElementById("statLoss").textContent = state.lastLoss !== undefined ? state.lastLoss.toFixed(4) : "–";
+  document.getElementById("statAcc").textContent = state.lastAcc !== undefined ? (state.lastAcc*100).toFixed(1)+"%" : "–";
+  let params = 0;
+  state.net.W.forEach(Wl => Wl.forEach(row => params += row.length));
+  state.net.b.forEach(bl => params += bl.length);
+  document.getElementById("statParams").textContent = params;
+}
+
+function updateInsight() {
+  const box = document.getElementById("insightBox");
+  const hist = state.lossHistory;
+  if (hist.length < 12) { box.innerHTML = "<b>Live read</b>Warming up..."; return; }
+  const recent = hist.slice(-10);
+  const mean = recent.reduce((a,b)=>a+b,0)/recent.length;
+  const variance = recent.reduce((a,b)=>a+(b-mean)**2,0)/recent.length;
+  const trendStart = hist[Math.max(0,hist.length-30)];
+  const trendEnd = hist[hist.length-1];
+  let msg;
+  if (!isFinite(mean) || mean > 5) {
+    msg = "Loss is blowing up — this looks like exploding gradients or too high a learning rate. Try lowering the learning rate slider.";
+  } else if (Math.sqrt(variance) > mean*0.4 && mean > 0.05) {
+    msg = "Loss is oscillating rather than settling. That usually means the learning rate is a bit too high for this architecture.";
+  } else if (trendEnd < trendStart*0.9) {
+    msg = "Loss is steadily decreasing — healthy training in progress.";
+  } else if (state.lastAcc >= 0.97) {
+    msg = "Accuracy has converged near 100%. Try a harder dataset (Spiral) or shrink the network to see it struggle.";
+  } else if (Math.abs(trendEnd-trendStart) < trendStart*0.02 && state.lastAcc < 0.85) {
+    msg = "Loss has plateaued but accuracy is still low — this network may not have enough capacity for this dataset. Try adding neurons or another hidden layer.";
+  } else {
+    msg = "Training normally.";
+  }
+  box.innerHTML = `<b>Live read</b>${msg}`;
+}
+
+function render() {
+  drawBoundary();
+  drawLossChart();
+  drawNetDiagram();
+  updateStats();
+  updateInsight();
+}
+
+/* =====================================================================
+   7. ANIMATION LOOP
+===================================================================== */
+function loop() {
+  if (state.playing) {
+    for (let i = 0; i < state.speed; i++) doTrainStep();
+    render();
+  }
+  requestAnimationFrame(loop);
+}
+render();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
