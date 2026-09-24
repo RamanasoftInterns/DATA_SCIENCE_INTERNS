@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FWI Prediction</title>
+</head>
+<body>
+    <div class="login">
+        <h1>FWI Prediction</h1>
+
+        <!-- Main Input For Receiving Query To Our ML model -->
+        <form action="{{ url_for('predict_datapoint') }}" method="post">
+            <input type="text" name="Temp : temperature noon (temperature max) in Celsius degrees: 22 to 42" placeholder="Temperature" required><br>
+            <input type="text" name="RH" placeholder="RH" required><br>
+            <input type="text" name="WS" placeholder="WS" required><br>
+            <input type="text" name="RAIN" placeholder="RAIN" required><br>
+            <input type="text" name="FFMC" placeholder="FFMC" required><br>
+            <input type="text" name="DMC" placeholder="DMC" required><br>
+            <input type="text" name="ISI" placeholder="ISI" required><br>
+            <input type="text" name="Classes" placeholder="Classes" required><br>
+            <input type="text" name="Region" placeholder="Region" required><br>
+            
+            <button type="submit" class="btn btn-primary btn-block btn-large">Predict</button>
+        </form>
+
+        <h2>
+            THE FWI prediction is {{ result }}
+        </h2>
+    </div>
+</body>
+</html>
