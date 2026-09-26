@@ -1,0 +1,36 @@
+14AUG2026
+
+NEW / REPLACEMENT -----> ( GITHUB )
+				REPLACEMENT , PROJECT-1 , 
+				DAY 1 :   X    ---> V1   , REPORT V1
+				DAY 2 :  Y     ---> V2  , REPORT V2
+
+FOLDER ---> git init ---> working directory ---> git add . ---> staging area ----->git commit -m "message"  ----> local repository -----> git push origin ---> remote repository 
+
+
+remote repository ----> clone ----> changes ---> add ---> commit ----> local repository ---> push ---> remote repository
+
+
+clone ----> clone and have to take that git instance to your local . first time accessing that repo , or new to that repo .
+
+pull --> cloned , i have done some changes , day 1 ---> repo , updates a notes , 
+
+
+
+TASK :
+
+---- YOU STARTED A PROJECT ---- ( GITHUB DESKTOP )
+1) CREATE A FOLDER
+2) INITIALIZE GIT 
+3) CHECK THAT IT IS IN THE TRACKING OR NOT
+4) ADD SOME FILES
+5) CONVERT FOLDER IN TO LOCAL REPOSITORY
+6) CONVERT LOCAL REPOSITORY IN TO REMOTE REPOSITORY
+
+
+--- YOU ARE REPLACEMENT -----  ( GITHUB DESKTOP )
+
+1) CLONE
+2) DO CHANGES
+3) COMMIT THE CHANGES
+4) PUSHING INTO THE REMOTE REPOSITORY

@@ -1,0 +1,1 @@
+A Git Merge is the process of integrating changes from a source branch (such as a feature branch) into a target branch (such as main or master), combining their respective commit histories.

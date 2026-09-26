@@ -1,0 +1,63 @@
+13AUG2026 ( GENAI_TESTING)
+
+3 months ----> track the project for that many days .
+
+team -- dev 1 , dev 2 , dev 3 --- backend
+
+ a , b , c ---> folder 
+
+
+
+DEV 1 ----> DAY 1 ---> X ----> A        WELL    
+		       DAY 2 ---> X ----> B	     WELL
+		       DAY 3 ---> X -----> C		NOT EXEUTED ----> CLIENT
+
+HE FAILED TO REVERT AL THE CHANGES : 
+
+IF THERE IS WHICH HELPS HIM TO DO THAT REVERTS 
+
+
+
+1) VERSION CONTROL : IS A SYSTEM THAT  RECORDS EVERT CHNAGE MADE TO THE PROJECT SO THAT YOU CAN RETURN TO ANY PREVIOUS VERSION WHEN EVER YOU WANT .
+
+VERSION CONTROL IS AN PROCESS ---- > GIT 
+
+2)GIT: git is a distributed version control system that tracks changes in files and source code over 				time .
+
+			--- git is a software, used to access that version control ---
+
+3) folder : a folder is an container like thing which stores the files .
+
+4) repository : is a folder which is under the tracking of the GIT ( git status )
+
+		-- git can only control the local files or local repositories -- once you have shared a file -- no control upon it -- cant track also ---
+
+5) git hub : GitHub server which is used to communicate between the developers for development 				and also most of the people will use it as an portfolio .
+
+			--- GitHub is a server ---
+
+		CLI ---> COMMAND LINE INTERFACE ---> ACCESSING THROUGH COMMADS
+		GUI ---> GRAPHICAL USER INTERFACE--->ACCESSING THROUGH UI 
+
+6) GIT HUB DESKTOP : IT IS SAME LIKE GITHUB SERVER OR GIT SOFWARE , SAME ACTIONS 						WHAT WE ARE DOING THERE WE CAN ALSO DO HERE , BUT THERE 						IS NO NEED OF COMMANDS , ALL THE THINGS WERE DONE WITH 						UI .
+
+
+TASK 1 :
+1) IF ANYONE DOES NOT INSTALLED GIT , INSTALL IT 
+2) INSTALL GITHUB DESKTOP 
+3) DIFFERENCE BETWEEN LOCAL REPOSITORY AND REMOTE REPOSITORY ?
+4 ) LIFECYCLE OF GIT / GIT HUB ?
+
+
+WE HAVE COMPLETED :
+1) VERSION CONTROL  2)  GIT  3) GITHUB  5 )FOLDER  6) REPOSITORY  7) GITHUB DESKTOP
+
+
+
+
+
+
+
+
+
+
