@@ -1,0 +1,48 @@
+1) mode , median , mean
+2) standard deviation
+3) variance
+4) normal distribution and its features
+5) empirical formula in statistics / 3 standard deviation rule
+6) mean = median = mode ?
+7) mean > median
+8) mean < median
+9) data cleaning pipe line
+
+data ----> load ---> 
+EDA ( you are retrieving the impurities from the data such as :
+1) null
+2) duplicates
+3) outliers
+4) non corelated columns )
+ ---->preprocessing --->  filtering the impurities
+
+
+pipe line of EDA
+
+data ----> load ---> EDA ---> spilt ( numerical and categorical )
+
+1) null ---> num ( median / mean ) 
+		     cat     ( mode )
+			
+				x1(num)      y ( num )   ----> num vs num
+2) corr ---> .corr () ---> karl pearson correleation of 								correlation .
+ 			        
+	x1(num)      y ( CAT )   ----> num vs cat
+	ANNOVA ( ONE WAY ANOVA )
+
+	x1(cat)      y ( cat )   ----> cat vs cat
+	CHI square test 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
